@@ -1,0 +1,23 @@
+{
+  "name": "ws-backend",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc -b",
+    "dev": "pnpm build && pnpm start",
+    "start": "node ./dist/server.js"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/ws": "^8.18.1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "ws": "^8.18.1"
+  }
+}
