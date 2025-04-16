@@ -1,6 +1,6 @@
 generator client {
     provider = "prisma-client-js"
-    output   = "../src/client"
+    // output   = "../src/client"
 }
 
 datasource db {
@@ -19,9 +19,29 @@ model User {
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
 
+    rooms Room[] @relation("UserRooms")
+    chats Chat[] @relation("UserChats")
+
     @@map("users")
 }
 
-//Other models 
+model Room {
+    id        Int      @id @default(autoincrement())
+    slug      String   @unique
+    createdAt DateTime @default(now()) @map("created_at")
+    adminId   String   @map("owner_id")
+    admin     User     @relation(fields: [adminId], references: [id], name: "UserRooms") //many to one
+    chats     Chat[]   @relation("RoomChats")
+}
+
+model Chat {
+    id        Int      @id @default(autoincrement())
+    userId    String   @map("user_id")
+    message   String
+    createdAt DateTime @default(now()) @map("created_at")
+    roomId    Int      @map("room_id")
+    room      Room     @relation(fields: [roomId], references: [id], name: "RoomChats") //many to one
+    User      User     @relation(fields: [userId], references: [id], name : "UserChats") //many to one
+}
 
 //Relations

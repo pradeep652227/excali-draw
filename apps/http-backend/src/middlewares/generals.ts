@@ -1,10 +1,9 @@
 /*External Dependencies*/
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
 
 /*Internal Dependencies*/
-import { helpers, types } from '@repo/utils';
-import config from '../config';
+import { helpers, types, commonMiddlewares } from '@repo/utils';
+
 
 const apiLogger = (req: Request, res: Response, next: NextFunction) => {
     console.log(`((((()))))) Middleware START :: API With Method = ${req.method} and url = ${req.protocol}://${req.get('host')}${req.originalUrl} ))))))))`);
@@ -32,31 +31,26 @@ const errorHandler = (err: any, req: Request, res: Response, next: NextFunction)
     res.status(500).json(helpers.sendResponse(false, 'Internal Server Error'));
 }
 
-const authentication = (req: types.AuthenticatedRequest, res: Response, next: NextFunction) => {
+const authentication =  (req: types.AuthenticatedRequest, res: Response, next: NextFunction): any => {
     try {
         const token = req.cookies?.authentication;
-        
+
         if (!token) {
             throw new helpers.CustomError(401, 'Authentication token not found');
         }
-        // Verify the token
-        jwt.verify(token, config.jwtSecret, (err: any, decoded: any) => {
-            if (err) {
+        const decodedInfo: { id: string } = commonMiddlewares.validateJwtToken(token) as any;
+        if (!decodedInfo)
+            throw new helpers.CustomError(401, 'Invalid authentication token');
 
-                console.log(`🚀 ~ generals.ts:48 ~ jwt.verify ~ err:`, err)
-
-                throw new helpers.CustomError(401, 'Invalid authentication token');
-            }
-            // Attach user information to the request object
-            req.user = decoded;
-            return next();
-        });
+        const userId = decodedInfo.id;
+        if (!userId)
+            throw new helpers.CustomError(401, 'Invalid authentication token');
+        req.id = userId; // Attach the user ID to the request object
+        return next();
     } catch (err: any) {
         if (!err.statusCode)
             console.error('Error in authentication middleware:', err);
         return res.status(500).json(helpers.sendResponse(false, err.statusCode != null ? err.message : 'Internal Server Error'));
-
-
     }
 }
 export { apiLogger, errorHandler, authentication }

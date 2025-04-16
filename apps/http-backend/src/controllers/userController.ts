@@ -4,17 +4,20 @@ import crypto from "crypto";
 
 /* Internal Dependencies*/
 import { User } from "@repo/database"
-import { helpers } from "@repo/utils"
+import { helpers, commonConfig, ZodSchemas } from "@repo/utils"
 import { Request, Response } from "express";
-import config from "../config";
-
 
 const signup = async (req: Request, res: Response): Promise<any> => {
     try {
-        const { username, email, password } = req.body;
-        if (!username || !email || !password)
-            throw new helpers.CustomError(400, "Missing required fields: username, email, password");
+        const { success, data, error } = ZodSchemas.CreateUserSchema.safeParse(req.body) as any;
+        if (!success) {
+            let errorMessage = error.errors
+                .map((err: any) => err.message)
+                .join(" | ");
+            throw new helpers.CustomError(400, errorMessage || 'Required fields are missing!!');
+        }
 
+        const { username, email, password } = req.body;
         const user = await User.create({ username, email, password });
         console.log('((((((((((())))))) USER CREATED VALUE :- ', user);
         return res.status(201).json(helpers.sendResponse(true, 'User created successfully', { user }));
@@ -27,6 +30,13 @@ const signup = async (req: Request, res: Response): Promise<any> => {
 
 const signin = async (req: Request, res: Response): Promise<any> => {
     try {
+        const { success, data, error } = ZodSchemas.SigninSchema.safeParse(req.body);
+        if (!success) {
+            let errorMessages = error.errors
+                .map((err: any) => err.message)
+                .join(" | ");
+            throw new helpers.CustomError(400, errorMessages || "Required fields are missing!!");
+        }
         const { email, password } = req.body;
         if (!email || !password)
             throw new helpers.CustomError(400, "Missing required fields: email, password");
@@ -38,23 +48,23 @@ const signin = async (req: Request, res: Response): Promise<any> => {
         //now sign the jwt token and store it in a cookie
         const token = jwt.sign(
             { id: user.id },
-            config.jwtSecret,
+            commonConfig.jwtSecret,
             {
-                expiresIn: parseInt(config.expiresIn) || '1h', // Ensure expiresIn is a valid string or number
-                algorithm: config.jwtAlgorithm || 'HS256',
-                audience: config.jwtAudience || 'http://localhost:3000',
-                issuer: config.jwtIssuer || 'http://localhost:3000',
+                expiresIn: parseInt(commonConfig.expiresIn) || '1h', // Ensure expiresIn is a valid string or number
+                algorithm: commonConfig.jwtAlgorithm || 'HS256',
+                audience: commonConfig.jwtAudience || 'http://localhost:3000',
+                issuer: commonConfig.jwtIssuer || 'http://localhost:3000',
                 subject: 'Authentication',
                 jwtid: crypto.randomUUID(), // ✅ generate a unique JWT ID
             } as jwt.SignOptions // Explicitly cast to SignOptions
         );
 
-            res.cookie('authentication', token, {
-                httpOnly: true,
-                secure: config.environment === 'production', // Set to true in production
-                sameSite: 'strict', // Adjust as needed
-                maxAge: parseInt(config.expiresIn)*1000, // 1 hour
-            });
+        res.cookie('authentication', token, {
+            httpOnly: true,
+            secure: commonConfig.environment === 'production', // Set to true in production
+            sameSite: 'strict', // Adjust as needed
+            maxAge: parseInt(commonConfig.expiresIn) * 1000, // 1 hour
+        });
 
 
 
