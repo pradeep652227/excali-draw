@@ -27,7 +27,7 @@ export default class Chat {
         }
     }
     static async getChatsByRoomId(roomId: number): Promise<PrismaChat[]> {
-        return await prisma.chat.findMany({ where: { roomId } });
+        return await prisma.chat.findMany({ where: { roomId }, orderBy : {id : "desc"}, take : 50 });
     }
 
     static async getAll(): Promise<PrismaChat[]> {
