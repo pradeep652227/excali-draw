@@ -16,6 +16,8 @@ app.use(middlewares.apiLogger);
 
 /*Routes*/
 app.use('/api/v1/user', routes.userRouter);
+app.use('/api/v1/room', routes.roomRouter);
+app.use('/api/v1/chat', routes.chatRouter);
 
 /*Middlewares*/
 app.use(middlewares.errorHandler);

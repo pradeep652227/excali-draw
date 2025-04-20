@@ -1,1 +1,1 @@
-{"root":["./src/config.ts","./src/helpers.ts","./src/index.ts","./src/middlewares.ts","./src/types.ts","./src/zodschemas.ts"],"version":"5.8.2"}
+{"root":["./src/config.ts","./src/helpers.ts","./src/index.ts","./src/middlewares.ts","./src/types.ts","./src/schemas/zod/generalschemas.ts","./src/schemas/zod/index.ts","./src/schemas/zod/userschemas.ts"],"version":"5.8.2"}

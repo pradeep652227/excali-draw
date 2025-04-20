@@ -11,9 +11,10 @@ export const validateJwtToken = (token: string) => {
         }
         // Verify the token
         const decoded = jwt.verify(token, config.jwtSecret);
+        
         if (!decoded || !(decoded as JwtPayload).id)
             throw new CustomError(401, 'Invalid authentication token');
-
+        
         return { id: (decoded as JwtPayload).id };
     } catch (error: any) {
         if (!error.statusCode)

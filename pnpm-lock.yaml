@@ -95,6 +95,9 @@ importers:
 
   apps/ws-backend:
     dependencies:
+      '@repo/database':
+        specifier: workspace:*
+        version: link:../../packages/database
       '@repo/utils':
         specifier: workspace:*
         version: link:../../packages/utils
@@ -114,6 +117,9 @@ importers:
       '@prisma/client':
         specifier: ^6.6.0
         version: 6.6.0(prisma@6.6.0(typescript@5.8.2))(typescript@5.8.2)
+      '@repo/utils':
+        specifier: workspace:*
+        version: link:../utils
       prisma:
         specifier: ^6.6.0
         version: 6.6.0(typescript@5.8.2)
@@ -199,9 +205,6 @@ importers:
 
   packages/utils:
     dependencies:
-      '@repo/database':
-        specifier: workspace:*
-        version: link:../database
       dotenv:
         specifier: ^16.4.7
         version: 16.4.7

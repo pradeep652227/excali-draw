@@ -11,7 +11,7 @@ export const authMiddleware = async (token: string): Promise<any> => {
         return userId; // Attach the user ID to the request object
     } catch (error: any) {
         if (!error.statusCode)
-            console.log('Error in WS: Auth Middleware')
+            console.log('Error in WS: Auth Middleware : ', error);
         return null;
     }
 };

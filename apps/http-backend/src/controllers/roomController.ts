@@ -3,8 +3,14 @@ import { helpers, ZodSchemas, types } from "@repo/utils";
 import { Request, Response } from "express";
 export const createRoom = async (req: types.AuthenticatedRequest, res: any): Promise<any> => {
     try {
-        req.body.adminId = req.id;
-        const { success, data, error } = ZodSchemas.CreateRoomSchema.safeParse(req.body);
+        const roomDetails = {...req.body , adminId : req.id};
+        console.log(`🚀 ~ roomController.ts:9 ~ createRoom ~ roomDetails:`, roomDetails)
+        const { success, data, error } = ZodSchemas.CreateRoomSchema.safeParse(roomDetails);
+
+
+        console.log(`🚀 ~ roomController.ts:11 ~ createRoom ~ success:`, success)
+
+
         if (!success)
             throw new helpers.CustomError(400, error?.issues[0]?.message || "Invalid request body");
 
