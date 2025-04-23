@@ -4,7 +4,7 @@ import { Router } from "express";
 
 const router : any = Router();
 
-router.use(authMiddleware);
+// router.use(authMiddleware);
 
 router.get("/all-:roomId", chatController.getAllChatsOfARoom);
 

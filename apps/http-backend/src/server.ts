@@ -1,6 +1,6 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
-
+import cors from 'cors';
 /* Internal Imports */
 import config from './config';
 import * as routes from './routes';
@@ -10,7 +10,11 @@ const app = express();
 const port = config.port;
 app.use(express.json());
 app.use(cookieParser());
-
+// app.use(cors({
+//     origin: config.corsOrigin,
+//     credentials: true, // Allow credentials (cookies, authorization headers, etc.)
+// }))
+app.use(cors());
 /*Middlewares*/
 app.use(middlewares.apiLogger);
 
