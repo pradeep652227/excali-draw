@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { wsBaseUrl } from '@/(utils)/config';
 
 export default function useSocket({
@@ -16,7 +16,7 @@ export default function useSocket({
     const [readyState, setReadyState] = useState<WebSocket["readyState"]>(WebSocket.CLOSED);
 
     useEffect(() => {
-        const socket = new WebSocket(`${wsBaseUrl}?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImZmZjQzYTc5LWJlMDAtNDFjYi04YTkzLWYwYzczZTRmMjk2NCIsImlhdCI6MTc0NTQzMjY3NywiZXhwIjoxNzQ1NDM2Mjc3LCJhdWQiOiJkcmF3LWFwcC1mcm9udGVuZCIsImlzcyI6ImRyYXctYXBwLWJhY2tlbmQiLCJzdWIiOiJBdXRoZW50aWNhdGlvbiIsImp0aSI6IjYwZDhhZGM0LTViMDQtNDUzZC04ZTE2LTE2NGZiMzU0MTQ2MSJ9.b45U-BhTNh-IkWQgYA654padcdVAI4jFmBGSXqmsINY`);
+        const socket = new WebSocket(`${wsBaseUrl}?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImZmZjQzYTc5LWJlMDAtNDFjYi04YTkzLWYwYzczZTRmMjk2NCIsImlhdCI6MTc0NTUxNjIwMiwiZXhwIjoxNzQ1NTE5ODAyLCJhdWQiOiJkcmF3LWFwcC1mcm9udGVuZCIsImlzcyI6ImRyYXctYXBwLWJhY2tlbmQiLCJzdWIiOiJBdXRoZW50aWNhdGlvbiIsImp0aSI6IjAwNzMwNDUzLTA1OTAtNDUyNy04MjM5LTMxZGRkNTM4ODEzMyJ9.1qx0CLc1TiMxuJO7xZe5ZvbliI_7yiRGcOl_1ywxzqE`);
         socketRef.current = socket;
 
         setReadyState(WebSocket.CONNECTING);
@@ -46,14 +46,16 @@ export default function useSocket({
         }
     }, [onMessage, onOpen, onClose, onError]);
 
-    const sendMessage = (data: string | object) => {
+    const sendMessage = useCallback((data: string | object) => {
         if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-          const payload = typeof data === "string" ? data : JSON.stringify(data);
-          socketRef.current.send(payload);
+            const payload = typeof data === "string" ? data : JSON.stringify(data);
+            console.log('Sending message:', payload);
+            socketRef.current.send(payload);
         } else {
-          console.warn("Socket not open. Cannot send message.");
+            console.warn("Socket not open. Cannot send message.");
         }
-      };
+    }, []);
+    
     return {
         sendMessage,
         loading: readyState === WebSocket.OPEN,

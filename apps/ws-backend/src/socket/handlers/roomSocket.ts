@@ -24,7 +24,7 @@ export const joinRoom = async (userId: string, data: any) => {
                 rooms: [...existingUser_RoomsInfo.rooms, roomId]
             });
 
-        return helpers.sendWebSocketResponse();
+        return helpers.sendWebSocketResponse(true,'join-room');
     } catch (error: any) {
         if (!error.statusCode)
             console.error('Error in joinRoom socket function ', error);
@@ -67,14 +67,16 @@ export const sendMessage = async (ws: types.AuthenticatedWebSocket, data: any) =
         }
 
         // Broadcast to all users in the room
+        let idx = 0;
         for (const user of Users_RoomsInfo.values()) {
             const isUserSubscribed = user.rooms.includes(roomId);
+            
             console.log('isUserSubscribed :- ', isUserSubscribed);
             if (isUserSubscribed) {
                 user.ws.send(JSON.stringify({
                     status: true,
                     type: "message",
-                    data: { roomId, message },
+                    data: { roomId, message, createdAt : new Date().getTime(), id: idx++ },
                 } as types.WebSocketResponse));
             }
         }
