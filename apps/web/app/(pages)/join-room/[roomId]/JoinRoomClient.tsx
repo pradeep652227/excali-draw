@@ -24,7 +24,7 @@ export default function JoinRoomClient({ roomId }: { roomId: string }) {
             const data = JSON.parse(message.data);
             console.log('📩 Received message:', data);
             if (data?.type === 'message' && data?.status && data?.data) {
-                setChats((prevChats) => [...prevChats, { ...data.data, id: new Date().getTime()}]);
+                setChats((prevChats) => [...prevChats, { ...data.data, id: new Date().getTime() }]);
             }
         } catch (err) {
             console.error('Failed to parse message:', err);
@@ -78,7 +78,8 @@ export default function JoinRoomClient({ roomId }: { roomId: string }) {
                     message,
                 },
             });
-            inputTextRef.current.value = '';
+            if (inputTextRef?.current?.value)
+                inputTextRef.current.value = '';
         }
     }, [roomId, sendMessage]);
 
