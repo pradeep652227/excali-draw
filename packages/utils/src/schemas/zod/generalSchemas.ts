@@ -18,3 +18,11 @@ export const CreateChatSchema = z.object({
     roomId : z.number()
 });
 export type CreateChatType = z.infer<typeof CreateChatSchema>;
+
+export const CreateShapeSchema = z.object({
+    type: z.string(),
+    dimensions: z.string(),
+    canvasId: z.number(),
+    userId: z.string()
+});
+export type CreateShapeType = z.infer<typeof CreateShapeSchema>;

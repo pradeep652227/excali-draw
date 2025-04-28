@@ -6,11 +6,11 @@ export interface AuthenticatedRequest extends Request {
 }
 
 export interface AuthenticatedWebSocket extends WebSocket {
-    id: string;
+    id?: string;
 }
 
 export interface RoomUser {
-    ws: WebSocket;
+    sockets: Set<AuthenticatedWebSocket>
     rooms: number[];//a user can join multiple rooms
     // userId: string;
 }
@@ -20,3 +20,22 @@ export interface WebSocketResponse {
     type: string,
     data: any
 }
+
+export interface ApiResponse {
+    status: boolean,
+    message: string,
+    data: any
+}
+
+export type Shape = {
+    type: "rect",
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+} | {
+    type: "circle",
+    centreX: number,
+    centreY: number,
+    radius: number
+} 

@@ -19,8 +19,9 @@ model User {
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
 
-    rooms Room[] @relation("UserRooms")
-    chats Chat[] @relation("UserChats")
+    rooms Room[]  @relation("UserRooms")
+    chats Chat[]  @relation("UserChats")
+    Shape Shape[] @relation("UserShapes") //one to many
 
     @@map("users")
 }
@@ -32,6 +33,7 @@ model Room {
     adminId   String   @map("owner_id")
     admin     User     @relation(fields: [adminId], references: [id], name: "UserRooms") //many to one
     chats     Chat[]   @relation("RoomChats")
+    Shape     Shape[]  @relation("CanvasShapes") //one to many
 }
 
 model Chat {
@@ -41,7 +43,18 @@ model Chat {
     createdAt DateTime @default(now()) @map("created_at")
     roomId    Int      @map("room_id")
     Room      Room     @relation(fields: [roomId], references: [id], name: "RoomChats") //many to one
-    User      User     @relation(fields: [userId], references: [id], name : "UserChats") //many to one
+    User      User     @relation(fields: [userId], references: [id], name: "UserChats") //many to one
+}
+
+model Shape {
+    id         Int      @id @default(autoincrement())
+    userId     String   @map("user_id")
+    type       String
+    dimensions String
+    createdAt  DateTime @default(now()) @map("created_at")
+    canvasId   Int      @map("room_id")
+    Room       Room     @relation(fields: [canvasId], references: [id], name: "CanvasShapes") //many to one
+    User       User     @relation(fields: [userId], references: [id], name: "UserShapes") //many to one
 }
 
 //Relations

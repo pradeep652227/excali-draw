@@ -70,6 +70,9 @@ importers:
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@repo/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@tailwindcss/postcss':
         specifier: ^4.1.4
         version: 4.1.4

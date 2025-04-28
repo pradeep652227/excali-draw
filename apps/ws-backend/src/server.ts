@@ -34,13 +34,14 @@ wss.on('connection', async (ws: types.AuthenticatedWebSocket, request) => {
 
     ws.id = userId; // Attach the user ID to the WebSocket instance
     //now set the user info in the map
-    const existing = Users_RoomsInfo.get(ws.id);
-    if (existing) {
-        console.log(`🔁 Duplicate connection for ${ws.id}. Closing previous one.`);
-        return existing.ws.close(4002, 'Duplicate connection');
+    // Get or Create user info
+    const existing = Users_RoomsInfo.get(userId);
+    if (!existing) {
+        Users_RoomsInfo.set(userId, { sockets: new Set([ws]), rooms: [] });
+    } else {
+        existing.sockets.add(ws);
     }
-    Users_RoomsInfo.set(ws.id, { ws, rooms: [] });
-
+    console.log(`🆕 Validation Passed : New connection for ${ws.id}. Users_RoomsInfo size: ${Users_RoomsInfo.size}`);
     ws.on('message', (data) => {
         try {
             const raw = Buffer.isBuffer(data) ? data.toString('utf8') : data;
@@ -70,18 +71,26 @@ wss.on('connection', async (ws: types.AuthenticatedWebSocket, request) => {
 
     ws.on('close', (code, reason) => {
         console.log(`📴 Client disconnected. Code: ${code}, Reason: ${reason}`);
-        if (Users_RoomsInfo.has(ws.id)) {
-            Users_RoomsInfo.delete(ws.id);
-            console.log(`✅ Removed user ${ws.id}. Users_RoomsInfo size: ${Users_RoomsInfo.size}`);
+        const userId = ws?.id || "";
+        if (Users_RoomsInfo.has(userId)) {
+            //check if there are more than 1 socket instance for this user
+            Users_RoomsInfo.get(userId)?.sockets?.delete(ws);
+            if (Users_RoomsInfo.get(userId)?.sockets?.size === 0) {
+                Users_RoomsInfo.delete(userId);
+                console.log(`🧹 Cleaned up user ${userId}. Users_RoomsInfo size: ${Users_RoomsInfo.size}`);
+            } else {
+                console.log(`ℹ️ User ${userId} still has active sockets. Users_RoomsInfo size: ${Users_RoomsInfo.size}`);
+            }
+            console.log(`✅ Removed user ${userId}. Users_RoomsInfo size: ${Users_RoomsInfo.size}`);
         } else {
-            console.log(`ℹ️ User ${ws.id} already removed or never added`);
+            console.log(`ℹ️ User ${userId} already removed or never added`);
         }
     });
 
     ws.on('error', (error) => {
         console.error(`⚠️ WebSocket error for user ${ws.id}:`, error);
-        if (Users_RoomsInfo.has(ws.id)) {
-            Users_RoomsInfo.delete(ws.id);
+        if (Users_RoomsInfo.has(ws.id as string)) {
+            Users_RoomsInfo.delete(ws.id as string);
             console.log(`🧹 Cleaned up user ${ws.id} after error`);
         }
     });

@@ -2,8 +2,13 @@ import { helpers, types } from "@repo/utils";
 import { Users_RoomsInfo } from '../../constants';
 import { Room, Chat } from '@repo/database';
 
-export const joinRoom = async (userId: string, data: any) => {
+export const joinRoom = async (ws: types.AuthenticatedWebSocket, data: any) => {
     try {
+        console.log('(((((( joinRoom function ))))))');
+        const userId = ws.id;
+        if (!userId)
+            throw new helpers.CustomError(400, 'User is missing to send the message');
+
         const { roomId } = data;
         if (!roomId)
             throw new helpers.CustomError(400, 'RoomId is required');
@@ -24,11 +29,16 @@ export const joinRoom = async (userId: string, data: any) => {
                 rooms: [...existingUser_RoomsInfo.rooms, roomId]
             });
 
-        return helpers.sendWebSocketResponse(true,'join-room');
+        console.log('Sending join Room response :- ');
+        return ws.send(JSON.stringify(helpers.sendWebSocketResponse(true, 'join-room')));
     } catch (error: any) {
-        if (!error.statusCode)
-            console.error('Error in joinRoom socket function ', error);
-        return helpers.sendWebSocketResponse(false, error.statusCode != null ? error.message : 'Internal Server Error');
+        if (error.statusCode) {
+            console.log('sending False join-room event because :- ', error.message);
+            return ws.send(JSON.stringify(helpers.sendWebSocketResponse(false, 'join-room', { message: error.message })));
+        }
+
+        console.error('Error in joinRoom socket function ', error);
+        return ws.send(JSON.stringify(helpers.sendWebSocketResponse(false, error.statusCode != null ? error.message : 'Internal Server Error')));
     }
 }
 
@@ -58,44 +68,47 @@ export const leaveRoom = async (userId: string, data: any) => {
 export const sendMessage = async (ws: types.AuthenticatedWebSocket, data: any) => {
     try {
         const { roomId, message } = data;
+        const userId = ws.id;
+        if (!userId)
+            throw new helpers.CustomError(400, 'User is missing to send the message');
 
-        console.log(`🚀 ~ roomSocket.ts:62 ~ sendMessage ~ data:`, data)
 
-        
         if (typeof roomId !== 'number' || typeof message !== 'string' || message.trim() === '') {
             throw new helpers.CustomError(400, 'roomId must be a number and message must be a non-empty string');
         }
 
-        // Broadcast to all users in the room
+        // Broadcast to all sockets of users in the room
         let idx = 0;
         for (const user of Users_RoomsInfo.values()) {
             const isUserSubscribed = user.rooms.includes(roomId);
-            
+
             console.log('isUserSubscribed :- ', isUserSubscribed);
             if (isUserSubscribed) {
-                user.ws.send(JSON.stringify({
-                    status: true,
-                    type: "message",
-                    data: { roomId, message, createdAt : new Date().getTime(), id: idx++ },
-                } as types.WebSocketResponse));
+                for (const socket of user.sockets) {
+                    socket.send(JSON.stringify({
+                        status: true,
+                        type: "message",
+                        data: { roomId, message, createdAt: new Date().getTime(), id: idx++ },
+                    } as types.WebSocketResponse));
+                }
             }
         }
 
-        //now save this message or chat
+        // Save the message to DB
         const chat = await Chat.create({
             message,
-            userId : ws.id,
+            userId,
             roomId
         });
-        if(!chat)
-            throw new helpers.CustomError(500 , 'Chat can not be created for this message');
+        if (!chat)
+            throw new helpers.CustomError(500, 'Chat cannot be created for this message');
     } catch (error: any) {
         if (!error.statusCode)
-            console.error('Error in sendMessage socket function ', error);
+            console.error('❌ Error in sendMessage:', error);
 
         ws.send(JSON.stringify({
             status: false,
-            type: "error",
+            type: "message",
             data: {
                 message: error.statusCode != null ? error.message : 'Internal Server Error'
             }
