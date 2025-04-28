@@ -16,8 +16,8 @@ export default function useSocket({
     const [readyState, setReadyState] = useState<WebSocket["readyState"]>(WebSocket.CLOSED);
 
     useEffect(() => {
-        const socket = new WebSocket(`${wsBaseUrl}?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImZmZjQzYTc5LWJlMDAtNDFjYi04YTkzLWYwYzczZTRmMjk2NCIsImlhdCI6MTc0NTg1MjY2OCwiZXhwIjoxNzQ1ODU2MjY4LCJhdWQiOiJkcmF3LWFwcC1mcm9udGVuZCIsImlzcyI6ImRyYXctYXBwLWJhY2tlbmQiLCJzdWIiOiJBdXRoZW50aWNhdGlvbiIsImp0aSI6IjY3N2ZkZmJlLTEyNTMtNDVjYi04YzhkLTFlMGZiN2JiOTBmNSJ9.YniVpQxVfWuKXZQEI53UkkA_v4ulBlM6SRAfI_D6zJk`);
-                socketRef.current = socket;
+        const socket = new WebSocket(`${wsBaseUrl}?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImZmZjQzYTc5LWJlMDAtNDFjYi04YTkzLWYwYzczZTRmMjk2NCIsImlhdCI6MTc0NTg2Mjk4OCwiZXhwIjoxNzQ1ODY2NTg4LCJhdWQiOiJkcmF3LWFwcC1mcm9udGVuZCIsImlzcyI6ImRyYXctYXBwLWJhY2tlbmQiLCJzdWIiOiJBdXRoZW50aWNhdGlvbiIsImp0aSI6ImI5Njc0YzU2LWNjZTUtNGZiNC1hMTgyLWIzZThmMTg2YTMxNiJ9.0s0cAc4PyiZ9jUmvbR7n2mhDtgNH3vRpWwZMyBvdC08`);
+        socketRef.current = socket;
 
         setReadyState(WebSocket.CONNECTING);
 

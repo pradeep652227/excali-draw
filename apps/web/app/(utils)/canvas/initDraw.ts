@@ -1,8 +1,15 @@
 import axios from 'axios';
-import { ExistingShapes } from "../constants";
+import { ExistingShapes, Shapes } from "../constants";
 import { apiBaseUrl } from '@/(utils)/config';
 import { types } from '@repo/utils';
-export default async function initDraw(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket | null, sendMessage: (message: any) => void) {
+
+/*Event Listener Variables*/
+let mouseDownHandler: ((e: MouseEvent) => void) | null = null;
+let mouseUpHandler: ((e: MouseEvent) => void) | null = null;
+let mouseMoveHandler: ((e: MouseEvent) => void) | null = null;
+
+export default async function initDraw(canvas: HTMLCanvasElement, roomId: string,
+    socket: WebSocket | null, sendMessage: (message: any) => void, selectedTool: string) {
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -44,7 +51,7 @@ export default async function initDraw(canvas: HTMLCanvasElement, roomId: string
         }
     }
 
-    if (earlyReturn){
+    if (earlyReturn) {
         console.log('((((( Early Returning )))))))')
         return;
     }
@@ -54,46 +61,79 @@ export default async function initDraw(canvas: HTMLCanvasElement, roomId: string
     let isClicked = false;
     let startX = 0;
     let startY = 0;
-    canvas.addEventListener("mousedown", (e) => {
+
+    removeEventListeners(canvas);//remove the event listeners if any
+
+    /*Add Fresh Event Listeners*/
+    mouseDownHandler = (e: MouseEvent) => {
         isClicked = true;
         startX = e.clientX;
         startY = e.clientY;
-    });
-    canvas.addEventListener("mouseup", (e) => {
+    };
+
+    mouseUpHandler = (e: MouseEvent) => {
         isClicked = false;
         const width = e.clientX - startX;
         const height = e.clientY - startY;
 
-        ExistingShapes.push({
-            type: "rect",
-            x: startX,
-            y: startY,
-            width,
-            height
-        });
+        let shapeObj = null;
+        if (selectedTool == 'rect')
+            shapeObj = {
+                type: "rect",
+                x: startX,
+                y: startY,
+                width,
+                height
+            }
+        else if (selectedTool == 'line')
+            shapeObj = {
+                type: "line",
+                startX,
+                startY,
+                endX: e.clientX,
+                endY: e.clientY
+            }
+        else {
+            return;
+        }
+        ExistingShapes.push(shapeObj as types.Shape);
 
+        const { type, ...shapeObjToSend } = shapeObj;
         //now send a web socket message to the server
         sendMessage({
             type: "shape",
             data: {
-                type: "rect",
+                type: shapeObj.type,
                 roomId: parseInt(roomId),
-                dimensions: JSON.stringify({ x: startX, y: startY, width, height })
+                dimensions: JSON.stringify(shapeObjToSend)
             }
         });
+    };
 
-
-    });
-
-    canvas.addEventListener("mousemove", (e) => {
+    mouseMoveHandler = (e: MouseEvent) => {
         if (!isClicked) return;
         clearCanvas(ctx, canvas);//clear the canvas and fill
-        /*Draw the existing Shape*/
-        ctx.strokeStyle = "white";
-        ctx.strokeRect(startX, startY, e.clientX - startX, e.clientY - startY);
-    });
+        if (selectedTool == 'rect') {
+            ctx.strokeStyle = "white";
+            ctx.strokeRect(startX, startY, e.clientX - startX, e.clientY - startY);
+        } else if (selectedTool == 'line') {
+            drawLine(ctx, startX, startY, e.clientX, e.clientY);
+        }
+    };
+
+    canvas.addEventListener("mousedown", mouseDownHandler);
+    canvas.addEventListener("mouseup", mouseUpHandler);
+    canvas.addEventListener("mousemove", mouseMoveHandler);
+
 }
 
+/*Utility functions*/
+
+function removeEventListeners(canvas: HTMLCanvasElement) {
+    if (mouseDownHandler) canvas.removeEventListener("mousedown", mouseDownHandler);
+    if (mouseUpHandler) canvas.removeEventListener("mouseup", mouseUpHandler);
+    if (mouseMoveHandler) canvas.removeEventListener("mousemove", mouseMoveHandler);
+}
 
 function fillRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, color: string = "rgba(0, 0, 0, 0.5)") {
     ctx.fillStyle = color;
@@ -107,9 +147,13 @@ function clearCanvas(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) {
     //now print the existing shapes
     ExistingShapes.forEach(shape => {
         ctx.strokeStyle = "white";
-        if (shape.type == 'rect') {
+        const { type } = shape;
+        if (type == 'rect') {
             const { x, y, width, height } = shape;
             ctx.strokeRect(x, y, width, height);
+        } else if (type == 'line') {
+            const { startX, startY, endX, endY } = shape;
+            drawLine(ctx, startX, startY, endX, endY);
         }
 
     })
@@ -135,4 +179,15 @@ async function setOldShapes(roomId: string) {
     } catch (error) {
         console.error('Error in setOldShapes:', error);
     }
+}
+
+function drawLine(ctx: CanvasRenderingContext2D,
+    startX: number, startY: number, endX: number, endY: number) {
+    // Start a new Path
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
+
+    // Draw the Path
+    ctx.stroke();
 }
