@@ -35,8 +35,8 @@ export type Shape = {
     height: number,
 } | {
     type: "circle",
-    centreX: number,
-    centreY: number,
+    x: number,
+    y: number,
     radius: number
 } | {
     type: "line",

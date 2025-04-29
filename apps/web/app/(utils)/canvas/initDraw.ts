@@ -8,6 +8,10 @@ let mouseDownHandler: ((e: MouseEvent) => void) | null = null;
 let mouseUpHandler: ((e: MouseEvent) => void) | null = null;
 let mouseMoveHandler: ((e: MouseEvent) => void) | null = null;
 
+/*Defaults*/
+const strokeStyle = 'white';
+const fillStyle = '#000';
+
 export default async function initDraw(canvas: HTMLCanvasElement, roomId: string,
     socket: WebSocket | null, sendMessage: (message: any) => void, selectedTool: string) {
 
@@ -19,8 +23,8 @@ export default async function initDraw(canvas: HTMLCanvasElement, roomId: string
 
     //get the old shapes
     await setOldShapes(roomId);
-
     clearCanvas(ctx, canvas);
+
     //on message from socket
     if (!socket) {
         console.error("Socket is not connected. Cannot listen for messages., socket = ", socket);
@@ -93,6 +97,17 @@ export default async function initDraw(canvas: HTMLCanvasElement, roomId: string
                 endX: e.clientX,
                 endY: e.clientY
             }
+        else if (selectedTool == 'circle') {
+            const radius = Math.sqrt(Math.pow(width, 2) + Math.pow(height, 2)) / 2;
+            const centerX = startX + width / 2;
+            const centerY = startY + height / 2;
+            shapeObj = {
+                type: "circle",
+                x: centerX,
+                y: centerY,
+                radius
+            }
+        }
         else {
             return;
         }
@@ -113,11 +128,17 @@ export default async function initDraw(canvas: HTMLCanvasElement, roomId: string
     mouseMoveHandler = (e: MouseEvent) => {
         if (!isClicked) return;
         clearCanvas(ctx, canvas);//clear the canvas and fill
+        const width = e.clientX - startX;
+        const height = e.clientY - startY;
         if (selectedTool == 'rect') {
-            ctx.strokeStyle = "white";
-            ctx.strokeRect(startX, startY, e.clientX - startX, e.clientY - startY);
+            ctx.strokeRect(startX, startY, width, height);
         } else if (selectedTool == 'line') {
             drawLine(ctx, startX, startY, e.clientX, e.clientY);
+        } else if (selectedTool == 'circle') {
+            const radius = Math.sqrt(Math.pow(width, 2) + Math.pow(height, 2)) / 2;
+            const centerX = startX + width / 2;
+            const centerY = startY + height / 2;
+            drawCircle(ctx, centerX, centerY, radius);
         }
     };
 
@@ -135,18 +156,19 @@ function removeEventListeners(canvas: HTMLCanvasElement) {
     if (mouseMoveHandler) canvas.removeEventListener("mousemove", mouseMoveHandler);
 }
 
-function fillRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, color: string = "rgba(0, 0, 0, 0.5)") {
+function fillRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, color: string = fillStyle) {
     ctx.fillStyle = color;
+    ctx.strokeStyle = strokeStyle;  // or your intended default
     ctx.fillRect(x, y, width, height);
 }
 
 function clearCanvas(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) {
+    console.log('Clearing canvas...');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     fillRect(ctx, 0, 0, canvas.width, canvas.height);
 
     //now print the existing shapes
     ExistingShapes.forEach(shape => {
-        ctx.strokeStyle = "white";
         const { type } = shape;
         if (type == 'rect') {
             const { x, y, width, height } = shape;
@@ -154,15 +176,17 @@ function clearCanvas(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) {
         } else if (type == 'line') {
             const { startX, startY, endX, endY } = shape;
             drawLine(ctx, startX, startY, endX, endY);
+        } else if (type == 'circle') {
+            const { x, y, radius } = shape;
+            drawCircle(ctx, x, y, radius);
         }
 
     })
 }
 
 async function setOldShapes(roomId: string) {
-
+    console.log('Setting old shapes...');
     try {
-
         const axiosResponse = await axios.get(`${apiBaseUrl}/api/v1/canvas/all-${parseInt(roomId.trim())}}`);
         const shapesData: types.ApiResponse = axiosResponse.data;
         if (shapesData.status) {
@@ -183,11 +207,19 @@ async function setOldShapes(roomId: string) {
 
 function drawLine(ctx: CanvasRenderingContext2D,
     startX: number, startY: number, endX: number, endY: number) {
+        console.log('Drawing line...');
     // Start a new Path
     ctx.beginPath();
     ctx.moveTo(startX, startY);
     ctx.lineTo(endX, endY);
 
     // Draw the Path
+    ctx.stroke();
+}
+
+function drawCircle(ctx: CanvasRenderingContext2D, centerX: number, centerY: number, radius: number) {
+    ctx.strokeStyle = strokeStyle;  // or your intended default
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
     ctx.stroke();
 }
