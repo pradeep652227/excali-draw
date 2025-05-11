@@ -1,0 +1,45 @@
+name: Deploy Node.js app to EC2
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "22.15.0" # or your version
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          npm ci
+
+      # Uncomment the following step if you have tests
+      # - name: Run tests
+      #   run: npm test
+
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+                export NVM_DIR="$HOME/.nvm"
+                source "$NVM_DIR/nvm.sh"
+                nvm use 22.15.0 
+
+                cd paytm-clone/backend
+
+                npm install
+                npm run build
+                pm2 restart paytm-clone-backend || pm2 start dist/server.js --name paytm-clone-backend
+                pm2 save
