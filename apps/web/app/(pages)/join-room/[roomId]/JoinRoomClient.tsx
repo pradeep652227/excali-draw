@@ -12,6 +12,7 @@ type Chat = {
     message: string;
     sender: string;
     timestamp: string;
+    createdAt: string;
 };
 
 export default function JoinRoomClient({ roomId }: { roomId: string }) {

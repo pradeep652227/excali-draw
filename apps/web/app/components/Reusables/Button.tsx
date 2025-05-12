@@ -1,4 +1,11 @@
-export default function Button({ label, className = '', type = 'button', ...props }) {
+interface ButtonProps {
+    label: string;
+    className?: string;
+    type?: 'button' | 'submit' | 'reset';
+    [key: string]: any;
+}
+
+export default function Button({ label, className = '', type = 'button', ...props }: ButtonProps) {
     return (
         <button
             type={type}
