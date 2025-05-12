@@ -1,4 +1,4 @@
-name: Deploy Node.js app to EC2
+name: Deploy Monorepo Node.js App to EC2
 
 on:
   push:
@@ -15,16 +15,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "22.15.0" # or your version
-
-      - name: Install dependencies
-        run: |
-          cd backend
-          npm ci
-
-      # Uncomment the following step if you have tests
-      # - name: Run tests
-      #   run: npm test
+          node-version: "22.15.0"
 
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v0.1.10
@@ -33,13 +24,32 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-                export NVM_DIR="$HOME/.nvm"
-                source "$NVM_DIR/nvm.sh"
-                nvm use 22.15.0 
+            export NVM_DIR="$HOME/.nvm"
+            source "$NVM_DIR/nvm.sh"
+            nvm use 22.15.0
 
-                cd paytm-clone/backend
+            cd excali-draw
 
-                npm install
-                npm run build
-                pm2 restart paytm-clone-backend || pm2 start dist/server.js --name paytm-clone-backend
-                pm2 save
+            git pull origin main
+
+            # Create global .env
+            echo "${{ secrets.GLOBAL_ENV }}" > .env
+
+            # Create app-specific .env files
+            echo "${{ secrets.BACKEND_ENV }}" > apps/backend/.env
+            echo "${{ secrets.WEB_ENV }}" > apps/web/.env
+            echo "${{ secrets.WS_ENV }}" > apps/ws/.env
+            echo "${{ secrets.DATABASE_ENV }}" > packages/database/.env
+
+            # Install dependencies
+            pnpm install
+
+            # Build the Turborepo
+            pnpm run build
+
+            # Restart existing processes
+            pm2 restart excali-http || pm2 start "pnpm --dir apps/http-backend start" --name excali-http
+            pm2 restart excali-ws   || pm2 start "pnpm --dir apps/ws-backend start" --name excali-ws
+            pm2 restart excali-fe   || pm2 start "pnpm --dir apps/web-backend start" --name excali-fe
+
+            pm2 save
