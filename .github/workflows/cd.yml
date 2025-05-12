@@ -41,6 +41,9 @@ jobs:
             echo "${{ secrets.WS_ENV }}" > apps/ws/.env
             echo "${{ secrets.DATABASE_ENV }}" > packages/database/.env
 
+            # check the directory
+            ls
+            
             # Install dependencies
             pnpm install
 
